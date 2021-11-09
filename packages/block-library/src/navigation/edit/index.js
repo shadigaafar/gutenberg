@@ -189,6 +189,8 @@ function Navigation( {
 	const isEntityAvailable =
 		! isNavigationMenuMissing && isNavigationMenuResolved;
 
+	const textDecoration = attributes.style?.typography?.textDecoration;
+
 	const blockProps = useBlockProps( {
 		ref: navRef,
 		className: classnames( className, {
@@ -205,6 +207,7 @@ function Navigation( {
 				'background-color',
 				backgroundColor?.slug
 			) ]: !! backgroundColor?.slug,
+			[ `has-text-decoration-${ textDecoration }` ]: textDecoration,
 		} ),
 		style: {
 			color: ! textColor?.slug && textColor?.color,
