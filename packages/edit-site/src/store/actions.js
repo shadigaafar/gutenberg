@@ -134,16 +134,16 @@ export function setTemplatePart( templatePartId ) {
 }
 
 /**
- * Returns an action object used to push a template part to navigation history.
+ * Returns an action object used to set the previous edited template.
  *
- * @param {string} templatePartId The template part ID.
+ * @param {Object} previousEditedTemplate The previous edited template's search params.
  *
  * @return {Object} Action object.
  */
-export function pushTemplatePart( templatePartId ) {
+export function setPreviousEditedTemplate( previousEditedTemplate ) {
 	return {
-		type: 'PUSH_TEMPLATE_PART',
-		templatePartId,
+		type: 'SET_PREVIOUS_EDITED_TEMPLATE',
+		previousEditedTemplate,
 	};
 }
 
