@@ -12,6 +12,7 @@
 -   Added an `__unstable-large` size variant to `InputControl`, `SelectControl`, and `UnitControl` for selective migration to the larger 40px heights. ([#35646](https://github.com/WordPress/gutenberg/pull/35646)).
 -   Fixed inconsistent padding in `UnitControl` ([#35646](https://github.com/WordPress/gutenberg/pull/35646)).
 -   Added support for RTL behavior for the `ZStack`'s `offset` prop ([#36769](https://github.com/WordPress/gutenberg/pull/36769))
+-   Divider: improve support for vertical orientation and RTL styles, use start/end logical props instead of top/bottom ([#36579](https://github.com/WordPress/gutenberg/pull/36579)).
 
 ### Bug Fix
 
