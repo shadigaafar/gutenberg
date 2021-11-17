@@ -9,6 +9,7 @@
 ### Bug Fix
 
 -   Fixed spacing between `BaseControl` fields and help text within the `ToolsPanel` ([36334](https://github.com/WordPress/gutenberg/pull/36334))
+-   Normalized label line-height and spacing within the `ToolsPanel` ([36387](https://github.com/WordPress/gutenberg/pull/36387))
 
 ## 19.0.2 (2021-11-15)
 
