@@ -463,7 +463,6 @@
 	@include break-small() {
 		&:not(.hidden-by-default) {
 			&:not(.is-menu-open) {
-				display: block;
 				width: 100%;
 				position: relative;
 				z-index: auto;
@@ -518,6 +517,16 @@
 	&:not(.always-shown) {
 		@include break-small {
 			display: none;
+		}
+	}
+}
+
+.wp-block-navigation__plain-menu {
+	display: none;
+
+	&:not(.always-shown) {
+		@include break-small {
+			display: block;
 		}
 	}
 }
