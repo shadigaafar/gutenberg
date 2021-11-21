@@ -4,6 +4,7 @@
 const CopyWebpackPlugin = require( 'copy-webpack-plugin' );
 const { escapeRegExp } = require( 'lodash' );
 const { join, sep } = require( 'path' );
+const { existsSync, readdirSync } = require( 'fs' );
 const fastGlob = require( 'fast-glob' );
 
 /**
@@ -14,7 +15,13 @@ const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extrac
 /**
  * Internal dependencies
  */
-const { baseConfig, plugins, stylesTransform } = require( './shared' );
+const {
+	__experimentalBuild,
+	baseConfig,
+	plugins,
+	stylesTransform,
+	BLOCK_LIBRARY_SOURCE_PATH,
+} = require( './shared' );
 
 /*
  * Matches a block's name in paths in the form
@@ -48,52 +55,76 @@ const createEntrypoints = () => {
 	}, {} );
 };
 
+function getEntries() {
+	const entry = {};
+
+	const blockNames = readdirSync( BLOCK_LIBRARY_SOURCE_PATH, {
+		withFileTypes: true,
+	} )
+		.filter( ( dirent ) => dirent.isDirectory() )
+		.map( ( dirent ) => dirent.name );
+
+	for ( const blockName of blockNames ) {
+		const scriptPath = join(
+			BLOCK_LIBRARY_SOURCE_PATH,
+			blockName,
+			'view.js'
+		);
+		if ( existsSync( scriptPath ) ) {
+			entry[ `blocks/${ blockName }` ] = scriptPath;
+		}
+	}
+
+	return entry;
+}
+
 module.exports = {
 	...baseConfig,
 	name: 'blocks',
-	entry: createEntrypoints(),
+	entry: __experimentalBuild ? getEntries() : createEntrypoints(),
 	output: {
 		devtoolNamespace: 'wp',
-		filename: './build/block-library/[name]/view.min.js',
-		path: join( __dirname, '..', '..' ),
+		filename: 'block-library/[name]/view.min.js',
+		path: join( __dirname, '..', '..', 'build' ),
 	},
 	plugins: [
 		...plugins,
 		new DependencyExtractionWebpackPlugin( { injectPolyfill: false } ),
 		new CopyWebpackPlugin( {
 			patterns: [].concat(
-				[
-					'style',
-					'style-rtl',
-					'editor',
-					'editor-rtl',
-					'theme',
-					'theme-rtl',
-				].map( ( filename ) => ( {
-					from: `./packages/block-library/build-style/*/${ filename }.css`,
-					to( { absoluteFilename } ) {
-						const [ , dirname ] = absoluteFilename.match(
-							new RegExp(
-								`([\\w-]+)${ escapeRegExp(
-									sep
-								) }${ filename }\\.css$`
-							)
-						);
+				__experimentalBuild
+					? []
+					: [
+							'style',
+							'style-rtl',
+							'editor',
+							'editor-rtl',
+							'theme',
+							'theme-rtl',
+					  ].map( ( filename ) => ( {
+							from: `./packages/block-library/build-style/*/${ filename }.css`,
+							to( { absoluteFilename } ) {
+								const [ , dirname ] = absoluteFilename.match(
+									new RegExp(
+										`([\\w-]+)${ escapeRegExp(
+											sep
+										) }${ filename }\\.css$`
+									)
+								);
 
-						return join(
-							'build/block-library/blocks',
-							dirname,
-							filename + '.css'
-						);
-					},
-					transform: stylesTransform,
-				} ) ),
+								return join(
+									'block-library/blocks',
+									dirname,
+									filename + '.css'
+								);
+							},
+							transform: stylesTransform,
+					  } ) ),
 				Object.entries( {
-					'./packages/block-library/src/':
-						'build/block-library/blocks/',
+					'./packages/block-library/src/': 'block-library/blocks/',
 					'./packages/edit-widgets/src/blocks/':
-						'build/edit-widgets/blocks/',
-					'./packages/widgets/src/blocks/': 'build/widgets/blocks/',
+						'edit-widgets/blocks/',
+					'./packages/widgets/src/blocks/': 'widgets/blocks/',
 				} ).flatMap( ( [ from, to ] ) => [
 					{
 						from: `${ from }/**/index.php`,

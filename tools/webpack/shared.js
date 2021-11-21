@@ -1,20 +1,31 @@
 /**
  * External dependencies
  */
+const { join } = require( 'path' );
+const { ProgressPlugin } = require( 'webpack' );
 const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
 const { DefinePlugin } = require( 'webpack' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
 const { compact } = require( 'lodash' );
 const postcss = require( 'postcss' );
+const threadLoader = require( 'thread-loader' );
 
 /**
  * WordPress dependencies
  */
 const ReadableJsAssetsWebpackPlugin = require( '@wordpress/readable-js-assets-webpack-plugin' );
 
+/**
+ * Internal dependencies
+ */
+const { dependencies } = require( '../../package.json' );
+
 const {
 	NODE_ENV: mode = 'development',
-	WP_DEVTOOL: devtool = mode === 'production' ? false : 'source-map',
+	WP_DEVTOOL: devtool = mode === 'production'
+		? false
+		: 'eval-cheap-source-map',
+	EXPERIMENTAL_BUILD: __experimentalBuild = false,
 } = process.env;
 
 const baseConfig = {
@@ -97,8 +108,79 @@ const stylesTransform = ( content ) => {
 	return content;
 };
 
+const BLOCK_LIBRARY_SOURCE_PATH = join(
+	__dirname,
+	'..',
+	'..',
+	'packages',
+	'block-library',
+	'src'
+);
+
+const WORDPRESS_NAMESPACE = '@wordpress/';
+const BUNDLED_PACKAGES = [ '@wordpress/icons', '@wordpress/interface' ];
+
+const GUTENBERG_PACKAGES = Object.keys( dependencies )
+	.filter(
+		( packageName ) =>
+			! BUNDLED_PACKAGES.includes( packageName ) &&
+			packageName.startsWith( WORDPRESS_NAMESPACE ) &&
+			! packageName.startsWith( WORDPRESS_NAMESPACE + 'react-native' )
+	)
+	.map( ( packageName ) => packageName.replace( WORDPRESS_NAMESPACE, '' ) );
+
+if ( __experimentalBuild ) {
+	threadLoader.warmup( {}, [ require.resolve( 'babel-loader' ) ] );
+
+	baseConfig.module.rules = [
+		{
+			test: /\.[tj]sx?$/,
+			exclude: /node_modules/,
+			use: [
+				require.resolve( 'thread-loader' ),
+				{
+					loader: require.resolve( 'babel-loader' ),
+					options: {
+						// Babel uses a directory within local node_modules
+						// by default. Use the environment variable option
+						// to enable more persistent caching.
+						cacheDirectory:
+							process.env.BABEL_CACHE_DIRECTORY || true,
+					},
+				},
+			],
+		},
+	];
+	baseConfig.resolve = {
+		extensions: [ '.ts', '.tsx', '...' ],
+		// "react-native" field usually has the source entry file.
+		mainFields: [ 'react-native', 'browser', 'module', 'main' ],
+	};
+	delete baseConfig.watchOptions;
+	baseConfig.stats =
+		mode === 'production'
+			? 'normal'
+			: {
+					preset: 'minimal',
+					version: false,
+					modules: false,
+					assets: false,
+			  };
+
+	plugins.push(
+		new ProgressPlugin( {
+			modules: false,
+			dependencies: false,
+			percentBy: 'entries',
+		} )
+	);
+}
+
 module.exports = {
+	__experimentalBuild,
 	baseConfig,
 	plugins,
 	stylesTransform,
+	BLOCK_LIBRARY_SOURCE_PATH,
+	GUTENBERG_PACKAGES,
 };
