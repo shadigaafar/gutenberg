@@ -118,13 +118,11 @@ function Navigation( {
 
 	const navigationAreaMenu = areaMenu === 0 ? undefined : areaMenu;
 
-	const navigationMenuId = navigationArea
-		? navigationAreaMenu
-		: attributes.navigationMenuId;
+	const ref = navigationArea ? navigationAreaMenu : attributes.ref;
 
-	const setNavigationMenuId = useCallback(
+	const setRef = useCallback(
 		( postId ) => {
-			setAttributes( { navigationMenuId: postId } );
+			setAttributes( { ref: postId } );
 			if ( navigationArea ) {
 				setAreaMenu( postId );
 			}
@@ -133,7 +131,7 @@ function Navigation( {
 	);
 
 	const [ hasAlreadyRendered, RecursionProvider ] = useNoRecursiveRenders(
-		`navigationMenu/${ navigationMenuId }`
+		`navigationMenu/${ ref }`
 	);
 
 	const { innerBlocks, isInnerBlockSelected } = useSelect(
@@ -160,7 +158,7 @@ function Navigation( {
 		setHasSavedUnsavedInnerBlocks,
 	] = useState( false );
 
-	const isWithinUnassignedArea = navigationArea && ! navigationMenuId;
+	const isWithinUnassignedArea = navigationArea && ! ref;
 
 	const [ isPlaceholderShown, setIsPlaceholderShown ] = useState(
 		! hasExistingNavItems || isWithinUnassignedArea
@@ -177,7 +175,7 @@ function Navigation( {
 		hasResolvedNavigationMenus,
 		navigationMenus,
 		navigationMenu,
-	} = useNavigationMenu( navigationMenuId );
+	} = useNavigationMenu( ref );
 
 	const navRef = useRef();
 	const isDraftNavigationMenu = navigationMenu?.status === 'draft';
@@ -300,7 +298,7 @@ function Navigation( {
 				onSave={ ( post ) => {
 					setHasSavedUnsavedInnerBlocks( true );
 					// Switch to using the wp_navigation entity.
-					setNavigationMenuId( post.id );
+					setRef( post.id );
 				} }
 			/>
 		);
@@ -308,7 +306,7 @@ function Navigation( {
 
 	// Show a warning if the selected menu is no longer available.
 	// TODO - the user should be able to select a new one?
-	if ( navigationMenuId && isNavigationMenuMissing ) {
+	if ( ref && isNavigationMenuMissing ) {
 		return (
 			<div { ...blockProps }>
 				<Warning>
@@ -335,11 +333,7 @@ function Navigation( {
 		: Placeholder;
 
 	return (
-		<EntityProvider
-			kind="postType"
-			type="wp_navigation"
-			id={ navigationMenuId }
-		>
+		<EntityProvider kind="postType" type="wp_navigation" id={ ref }>
 			<RecursionProvider>
 				<BlockControls>
 					{ ! isDraftNavigationMenu && isEntityAvailable && (
@@ -352,7 +346,7 @@ function Navigation( {
 								{ ( { onClose } ) => (
 									<NavigationMenuSelector
 										onSelect={ ( { id } ) => {
-											setNavigationMenuId( id );
+											setRef( id );
 											onClose();
 										} }
 										onCreateNew={ () => {
@@ -360,7 +354,7 @@ function Navigation( {
 												setAreaMenu( 0 );
 											}
 											setAttributes( {
-												navigationMenuId: undefined,
+												ref: undefined,
 											} );
 											setIsPlaceholderShown( true );
 										} }
@@ -486,7 +480,7 @@ function Navigation( {
 									setAreaMenu( 0 );
 								}
 								setAttributes( {
-									navigationMenuId: undefined,
+									ref: undefined,
 								} );
 								setIsPlaceholderShown( true );
 							} }
@@ -498,7 +492,7 @@ function Navigation( {
 						<PlaceholderComponent
 							onFinish={ ( post ) => {
 								setIsPlaceholderShown( false );
-								setNavigationMenuId( post.id );
+								setRef( post.id );
 								selectBlock( clientId );
 							} }
 							canSwitchNavigationMenu={ canSwitchNavigationMenu }
