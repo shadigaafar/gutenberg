@@ -892,7 +892,14 @@ class WP_Theme_JSON_Gutenberg {
 			}
 		}
 
-		return $declarations;
+		/**
+		 * Filters the CSS Custom Properties for the presets.
+		 *
+		 * @param array $declarations The CSS Custom Properties.
+		 *
+		 * @return array The CSS Custom Properties.
+		 */
+		return apply_filters( 'wp_block_styles_preset_vars', $declarations );
 	}
 
 	/**
