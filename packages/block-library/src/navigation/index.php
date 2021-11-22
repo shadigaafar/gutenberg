@@ -291,9 +291,9 @@ function render_block_core_navigation( $attributes, $content, $block ) {
 		'wp-block-navigation__responsive-container-open',
 		$is_hidden_by_default ? 'always-shown' : '',
 	);
-	$plain_menu_classes 					= array(
+	$plain_menu_classes           = array(
 		'wp-block-navigation__plain-menu',
-		$is_hidden_by_default ? 'always-shown' : ''
+		$is_hidden_by_default ? 'always-shown' : '',
 	);
 
 	$responsive_container_markup = sprintf(
@@ -316,7 +316,7 @@ function render_block_core_navigation( $attributes, $content, $block ) {
 		implode( ' ', $responsive_container_classes ),
 		implode( ' ', $open_button_classes ),
 		$colors['overlay_inline_styles'],
-		implode(' ', $plain_menu_classes)
+		implode( ' ', $plain_menu_classes )
 	);
 
 	return sprintf(
