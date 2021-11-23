@@ -20,6 +20,7 @@ import { FlexItem } from '../flex';
 import { HStack } from '../h-stack';
 import { ItemGroup } from '../item-group';
 import { VStack } from '../v-stack';
+import GradientPicker from '../gradient-picker';
 import ColorPalette from '../color-palette';
 import DropdownMenu from '../dropdown-menu';
 import Popover from '../popover';
@@ -36,6 +37,8 @@ import {
 	RemoveButton,
 } from './styles';
 import { NavigableMenu } from '../navigable-container';
+import { DEFAULT_GRADIENT } from '../custom-gradient-picker/constants';
+import CustomGradientPicker from '../custom-gradient-picker';
 
 function ColorNameInput( { value, onChange } ) {
 	return (
@@ -50,15 +53,17 @@ function ColorNameInput( { value, onChange } ) {
 
 function ColorOption( {
 	canOnlyChangeValues,
-	color,
+	element,
 	onChange,
 	isEditing,
 	onStartEditing,
 	onRemove,
 	onStopEditing,
 	slugPrefix,
+	isGradient,
 } ) {
 	const focusOutsideProps = useFocusOutside( onStopEditing );
+	const value = isGradient ? element.gradient : element.color;
 	return (
 		<ColorItem
 			as="div"
@@ -67,22 +72,26 @@ function ColorOption( {
 		>
 			<HStack justify="flex-start">
 				<FlexItem>
-					<ColorIndicatorStyled colorValue={ color.color } />
+					<ColorIndicatorStyled
+						style={ { background: value, color: 'transparent' } }
+					/>
 				</FlexItem>
 				<FlexItem>
 					{ isEditing && ! canOnlyChangeValues ? (
 						<ColorNameInput
-							value={ color.name }
+							value={ element.name }
 							onChange={ ( nextName ) =>
 								onChange( {
-									...color,
+									...element,
 									name: nextName,
 									slug: slugPrefix + kebabCase( nextName ),
 								} )
 							}
 						/>
 					) : (
-						<ColorNameContainer>{ color.name }</ColorNameContainer>
+						<ColorNameContainer>
+							{ element.name }
+						</ColorNameContainer>
 					) }
 				</FlexItem>
 				{ isEditing && ! canOnlyChangeValues && (
@@ -99,17 +108,30 @@ function ColorOption( {
 			{ isEditing && (
 				<Popover
 					position="bottom left"
-					className="components-color-edit__color-popover"
+					className="components-color-edit__popover"
 				>
-					<ColorPicker
-						color={ color.color }
-						onChange={ ( newColor ) =>
-							onChange( {
-								...color,
-								color: newColor,
-							} )
-						}
-					/>
+					{ ! isGradient && (
+						<ColorPicker
+							color={ value }
+							onChange={ ( newColor ) =>
+								onChange( {
+									...element,
+									color: newColor,
+								} )
+							}
+						/>
+					) }
+					{ isGradient && (
+						<CustomGradientPicker
+							value={ value }
+							onChange={ ( newGradient ) =>
+								onChange( {
+									...element,
+									gradient: newGradient,
+								} )
+							}
+						/>
+					) }
 				</Popover>
 			) }
 		</ColorItem>
@@ -117,55 +139,59 @@ function ColorOption( {
 }
 
 function ColorPaletteEditListView( {
-	colors,
+	elements,
 	onChange,
-	editingColor,
-	setEditingColor,
+	editingElement,
+	setEditingElement,
 	canOnlyChangeValues,
 	slugPrefix,
+	isGradient,
 } ) {
 	// When unmounting the component if there are empty colors (the user did not complete the insertion) clean them.
-	const colorReference = useRef();
+	const elementsReference = useRef();
 	useEffect( () => {
-		colorReference.current = colors;
-	}, [ colors ] );
+		elementsReference.current = elements;
+	}, [ elements ] );
 	useEffect( () => {
 		return () => {
-			if ( colorReference.current.some( ( { slug } ) => ! slug ) ) {
-				const newColors = colorReference.current.filter(
+			if ( elementsReference.current.some( ( { slug } ) => ! slug ) ) {
+				const newElements = elementsReference.current.filter(
 					( { slug } ) => slug
 				);
-				onChange( newColors.length ? newColors : undefined );
+				onChange( newElements.length ? newElements : undefined );
 			}
 		};
 	}, [] );
 	return (
 		<VStack spacing={ 3 }>
 			<ItemGroup isBordered isSeparated>
-				{ colors.map( ( color, index ) => (
+				{ elements.map( ( element, index ) => (
 					<ColorOption
+						isGradient={ isGradient }
 						canOnlyChangeValues={ canOnlyChangeValues }
 						key={ index }
-						color={ color }
+						element={ element }
 						onStartEditing={ () => {
-							if ( editingColor !== index ) {
-								setEditingColor( index );
+							if ( editingElement !== index ) {
+								setEditingElement( index );
 							}
 						} }
-						onChange={ ( newColor ) => {
+						onChange={ ( newElement ) => {
 							onChange(
-								colors.map( ( currentColor, currentIndex ) => {
-									if ( currentIndex === index ) {
-										return newColor;
+								elements.map(
+									( currentElement, currentIndex ) => {
+										if ( currentIndex === index ) {
+											return newElement;
+										}
+										return currentElement;
 									}
-									return currentColor;
-								} )
+								)
 							);
 						} }
 						onRemove={ () => {
-							setEditingColor( null );
-							const newColors = colors.filter(
-								( _currentColor, currentIndex ) => {
+							setEditingElement( null );
+							const newElements = elements.filter(
+								( _currentElement, currentIndex ) => {
 									if ( currentIndex === index ) {
 										return false;
 									}
@@ -173,13 +199,13 @@ function ColorPaletteEditListView( {
 								}
 							);
 							onChange(
-								newColors.length ? newColors : undefined
+								newElements.length ? newElements : undefined
 							);
 						} }
-						isEditing={ index === editingColor }
+						isEditing={ index === editingElement }
 						onStopEditing={ () => {
-							if ( index === editingColor ) {
-								setEditingColor( null );
+							if ( index === editingElement ) {
+								setEditingElement( null );
 							}
 						} }
 						slugPrefix={ slugPrefix }
@@ -193,6 +219,7 @@ function ColorPaletteEditListView( {
 const EMPTY_ARRAY = [];
 
 export default function ColorEdit( {
+	gradients,
 	colors = EMPTY_ARRAY,
 	onChange,
 	paletteLabel,
@@ -201,15 +228,17 @@ export default function ColorEdit( {
 	canReset,
 	slugPrefix = '',
 } ) {
+	const isGradient = !! gradients;
+	const elements = isGradient ? gradients : colors;
 	const [ isEditing, setIsEditing ] = useState( false );
-	const [ editingColor, setEditingColor ] = useState( null );
+	const [ editingElement, setEditingElement ] = useState( null );
 	const isAdding =
 		isEditing &&
-		editingColor &&
-		colors[ editingColor ] &&
-		! colors[ editingColor ].slug;
+		editingElement &&
+		elements[ editingElement ] &&
+		! elements[ editingElement ].slug;
 
-	const hasColors = colors.length > 0;
+	const hasElements = elements.length > 0;
 
 	return (
 		<ColorEditStyles>
@@ -221,7 +250,7 @@ export default function ColorEdit( {
 							isSmall
 							onClick={ () => {
 								setIsEditing( false );
-								setEditingColor( null );
+								setEditingElement( null );
 							} }
 						>
 							{ __( 'Done' ) }
@@ -232,27 +261,37 @@ export default function ColorEdit( {
 							isSmall
 							isPressed={ isAdding }
 							icon={ plus }
-							label={ __( 'Add color' ) }
+							label={
+								isGradient
+									? __( 'Add gradient' )
+									: __( 'Add color' )
+							}
 							onClick={ () => {
 								onChange( [
-									...colors,
+									...elements,
 									{
-										color: '#000',
+										...( isGradient
+											? { gradient: DEFAULT_GRADIENT }
+											: { color: '#000' } ),
 										name: '',
 										slug: '',
 									},
 								] );
 								setIsEditing( true );
-								setEditingColor( colors.length );
+								setEditingElement( elements.length );
 							} }
 						/>
 					) }
 					{ ! isEditing && (
 						<Button
-							disabled={ ! hasColors }
+							disabled={ ! hasElements }
 							isSmall
 							icon={ moreVertical }
-							label={ __( 'Edit colors' ) }
+							label={
+								isGradient
+									? __( 'Edit gradients' )
+									: __( 'Edit colors' )
+							}
 							onClick={ () => {
 								setIsEditing( true );
 							} }
@@ -261,7 +300,11 @@ export default function ColorEdit( {
 					{ isEditing && ( canReset || ! canOnlyChangeValues ) && (
 						<DropdownMenu
 							icon={ moreVertical }
-							label={ __( 'Color options' ) }
+							label={
+								isGradient
+									? __( 'Gradient options' )
+									: __( 'Color options' )
+							}
 							toggleProps={ {
 								isSmall: true,
 							} }
@@ -273,25 +316,33 @@ export default function ColorEdit( {
 											<Button
 												variant="tertiary"
 												onClick={ () => {
-													setEditingColor( null );
+													setEditingElement( null );
 													setIsEditing( false );
 													onChange();
 													onClose();
 												} }
 											>
-												{ __( 'Remove all colors' ) }
+												{ isGradient
+													? __(
+															'Remove all gradients'
+													  )
+													: __(
+															'Remove all colors'
+													  ) }
 											</Button>
 										) }
 										{ canReset && (
 											<Button
 												variant="tertiary"
 												onClick={ () => {
-													setEditingColor( null );
+													setEditingElement( null );
 													onChange();
 													onClose();
 												} }
 											>
-												{ __( 'Reset colors' ) }
+												{ isGradient
+													? __( 'Reset gradient' )
+													: __( 'Reset colors' ) }
 											</Button>
 										) }
 									</NavigableMenu>
@@ -301,29 +352,38 @@ export default function ColorEdit( {
 					) }
 				</ColorActionsContainer>
 			</ColorHStackHeader>
-			{ hasColors && (
+			{ hasElements && (
 				<>
 					{ isEditing && (
 						<ColorPaletteEditListView
 							canOnlyChangeValues={ canOnlyChangeValues }
-							colors={ colors }
+							elements={ elements }
 							onChange={ onChange }
-							editingColor={ editingColor }
-							setEditingColor={ setEditingColor }
+							editingElement={ editingElement }
+							setEditingElement={ setEditingElement }
 							slugPrefix={ slugPrefix }
+							isGradient={ isGradient }
 						/>
 					) }
-					{ ! isEditing && (
-						<ColorPalette
-							colors={ colors }
-							onChange={ () => {} }
-							clearable={ false }
-							disableCustomColors={ true }
-						/>
-					) }
+					{ ! isEditing &&
+						( isGradient ? (
+							<GradientPicker
+								gradients={ gradients }
+								onChange={ () => {} }
+								clearable={ false }
+								disableCustomGradients={ true }
+							/>
+						) : (
+							<ColorPalette
+								colors={ colors }
+								onChange={ () => {} }
+								clearable={ false }
+								disableCustomColors={ true }
+							/>
+						) ) }
 				</>
 			) }
-			{ ! hasColors && emptyMessage }
+			{ ! hasElements && emptyMessage }
 		</ColorEditStyles>
 	);
 }

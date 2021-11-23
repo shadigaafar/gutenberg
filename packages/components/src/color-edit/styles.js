@@ -20,17 +20,12 @@ import {
 	Input,
 	BackdropUI as InputBackdropUI,
 } from '../input-control/styles/input-control-styles';
+import CircularOptionPicker from '../circular-option-picker';
 
-export const ColorIndicatorStyled = styled( ColorIndicator )`
-	&& {
-		display: block;
-		border-radius: 50%;
-		border: 0;
-		height: ${ space( 6 ) };
-		width: ${ space( 6 ) };
-		margin-left: 0;
-		padding: 0;
-	}
+export const ColorIndicatorStyled = styled( CircularOptionPicker.Option )`
+	width: ${ space( 6 ) };
+	height: ${ space( 6 ) };
+	pointer-events: none;
 `;
 
 export const ColorNameInputControl = styled( InputControl )`
@@ -52,9 +47,12 @@ export const ColorItem = styled( Item )`
 	height: calc( 40px - ${ CONFIG.borderWidth } );
 `;
 
-export const ColorNameContainer = styled.span`
+export const ColorNameContainer = styled.div`
 	line-height: ${ space( 8 ) };
 	margin-left: ${ space( 2 ) };
+	margin-right: ${ space( 2 ) };
+	white-space: nowrap;
+	overflow: hidden;
 `;
 
 export const ColorHeading = styled( Heading )`
