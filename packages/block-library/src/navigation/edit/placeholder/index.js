@@ -143,7 +143,6 @@ export default function NavigationPlaceholder( {
 		isResolvingMenus,
 		menuItems,
 		hasResolvedMenuItems,
-		hasPages,
 		hasMenus,
 	} = useNavigationEntities( selectedMenu );
 
@@ -218,20 +217,6 @@ export default function NavigationPlaceholder( {
 										menus={ menus }
 										onCreateFromMenu={ onCreateFromMenu }
 									/>
-									<hr />
-								</>
-							) : undefined }
-							{ hasPages ? (
-								<>
-									<Button
-										variant="tertiary"
-										onClick={ () => {
-											setIsNewMenuModalVisible( true );
-											setCreateEmpty( false );
-										} }
-									>
-										{ __( 'Add all pages' ) }
-									</Button>
 									<hr />
 								</>
 							) : undefined }
