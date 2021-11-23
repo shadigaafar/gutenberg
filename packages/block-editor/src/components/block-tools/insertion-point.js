@@ -194,6 +194,18 @@ function InsertionPointPopover( {
 			openRef.current = true;
 		}
 	}
+	function onBlur( event ) {
+		console.log( 'blah', event );
+	}
+
+	/*
+
+		const { showInsertionPoint, hideInsertionPoint } = useDispatch(
+		blockEditorStore
+	);
+	dispatch hideInsertionPoint to hide it
+
+	 */
 
 	// Only show the in-between inserter between blocks, so when there's a
 	// previous and a next element.
@@ -294,6 +306,7 @@ function InsertionPointPopover( {
 			// Forces a remount of the popover when its position changes
 			// This makes sure the popover doesn't animate from its previous position.
 			key={ nextClientId + '--' + rootClientId }
+			onFocusOutside={ onFocusOutside }
 		>
 			<motion.div
 				layout={ ! disableMotion }
