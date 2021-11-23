@@ -16,6 +16,7 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * Internal dependencies
  */
+import TemplateAddedBy from './added-by';
 import { store as editSiteStore } from '../../store';
 import isTemplateRemovable from '../../utils/is-template-removable';
 
@@ -120,7 +121,10 @@ export default function Table( { templateType } ) {
 						</td>
 
 						<td className="edit-site-list-table-column" role="cell">
-							{ template.theme }
+							<TemplateAddedBy
+								templateType={ templateType }
+								template={ template }
+							/>
 						</td>
 						<td className="edit-site-list-table-column" role="cell">
 							{ isTemplateRemovable( template ) && (
