@@ -18,21 +18,56 @@ import { addQueryArgs } from '@wordpress/url';
  */
 import { store as editSiteStore } from '../../store';
 import isTemplateRemovable from '../../utils/is-template-removable';
+import isTemplateRevertable from '../../utils/is-template-revertable';
 
-function Actions( { template, onClose } ) {
-	const { removeTemplate } = useDispatch( editSiteStore );
+function Actions( { template } ) {
+	const { removeTemplate, revertTemplate } = useDispatch( editSiteStore );
+	const { saveEditedEntityRecord } = useDispatch( coreStore );
+
+	const isRemovable = isTemplateRemovable( template );
+	const isRevertable = isTemplateRevertable( template );
+
+	if ( ! isRemovable && ! isRevertable ) {
+		return null;
+	}
+
+	async function revertAndSaveTemplate() {
+		await revertTemplate( template, { allowUndo: false } );
+		await saveEditedEntityRecord( 'postType', template.type, template.id );
+	}
 
 	return (
-		<MenuGroup>
-			<MenuItem
-				onClick={ () => {
-					removeTemplate( template );
-					onClose();
-				} }
-			>
-				{ __( 'Remove template' ) }
-			</MenuItem>
-		</MenuGroup>
+		<DropdownMenu
+			icon={ moreVertical }
+			label={ __( 'Actions' ) }
+			className="edit-site-list-table__actions"
+		>
+			{ ( { onClose } ) => (
+				<MenuGroup>
+					{ isRemovable && (
+						<MenuItem
+							onClick={ () => {
+								removeTemplate( template );
+								onClose();
+							} }
+						>
+							{ __( 'Remove template' ) }
+						</MenuItem>
+					) }
+					{ isRevertable && (
+						<MenuItem
+							info={ __( 'Restore template to theme default' ) }
+							onClick={ () => {
+								revertAndSaveTemplate();
+								onClose();
+							} }
+						>
+							{ __( 'Clear customizations' ) }
+						</MenuItem>
+					) }
+				</MenuGroup>
+			) }
+		</DropdownMenu>
 	);
 }
 
@@ -46,10 +81,13 @@ export default function Table( { templateType } ) {
 			} = select( coreStore );
 
 			return {
-				templates: getEntityRecords( 'postType', templateType ),
+				templates: getEntityRecords( 'postType', templateType, {
+					per_page: -1,
+				} ),
 				isLoading: ! hasFinishedResolution( 'getEntityRecords', [
 					'postType',
 					templateType,
+					{ per_page: -1 },
 				] ),
 				postType: getPostType( templateType ),
 			};
@@ -109,8 +147,7 @@ export default function Table( { templateType } ) {
 					>
 						<td className="edit-site-list-table-column" role="cell">
 							<a
-								href={ addQueryArgs( '', {
-									page: 'gutenberg-edit-site',
+								href={ addQueryArgs( window.location.href, {
 									postId: template.id,
 									postType: template.type,
 								} ) }
@@ -124,20 +161,7 @@ export default function Table( { templateType } ) {
 							{ template.theme }
 						</td>
 						<td className="edit-site-list-table-column" role="cell">
-							{ isTemplateRemovable( template ) && (
-								<DropdownMenu
-									icon={ moreVertical }
-									label={ __( 'Actions' ) }
-									className="edit-site-list-table__actions"
-								>
-									{ ( { onClose } ) => (
-										<Actions
-											template={ template }
-											onClose={ onClose }
-										/>
-									) }
-								</DropdownMenu>
-							) }
+							<Actions template={ template } />
 						</td>
 					</tr>
 				) ) }
