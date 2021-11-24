@@ -55,7 +55,8 @@ export default function useNavigationMenu( ref ) {
 			return {
 				isNavigationMenuResolved: hasResolvedNavigationMenu,
 				isNavigationMenuMissing:
-					! ref || ( hasResolvedNavigationMenu && ! rawNavigationMenu ),
+					! ref || 
+					( hasResolvedNavigationMenu && ! rawNavigationMenu ),
 				canSwitchNavigationMenu,
 				hasResolvedNavigationMenus: hasFinishedResolution(
 					'getEntityRecords',
