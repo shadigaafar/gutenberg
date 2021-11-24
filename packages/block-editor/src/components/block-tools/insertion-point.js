@@ -207,6 +207,10 @@ function InsertionPointPopover( {
 		}, 1000 );
 	}
 
+	function onMouseEnter() {
+		clearTimeout( timer?.current );
+	}
+
 	// Only show the in-between inserter between blocks, so when there's a
 	// previous and a next element.
 	const showInsertionPointInserter =
@@ -324,6 +328,7 @@ function InsertionPointPopover( {
 				} ) }
 				style={ style }
 				onMouseLeave={ onFocusOutside }
+				onMouseEnter={ onMouseEnter }
 			>
 				<motion.div
 					variants={ lineVariants }
