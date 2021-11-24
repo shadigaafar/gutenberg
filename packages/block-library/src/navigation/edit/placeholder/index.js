@@ -21,7 +21,6 @@ import { decodeEntities } from '@wordpress/html-entities';
  */
 
 import useNavigationEntities from '../../use-navigation-entities';
-import PlaceholderPreview from './placeholder-preview';
 import menuItemsToBlocks from '../../menu-items-to-blocks';
 import NavigationMenuNameModal from '../navigation-menu-name-modal';
 import useNavigationMenu from '../../use-navigation-menu';
@@ -193,13 +192,17 @@ export default function NavigationPlaceholder( {
 
 	return (
 		<>
-			{ ( ! hasResolvedNavigationMenus || isStillLoading ) && (
-				<PlaceholderPreview isLoading />
-			) }
-			{ hasResolvedNavigationMenus && ! isStillLoading && (
-				<Placeholder className="wp-block-navigation-placeholder">
-					<PlaceholderPreview />
-					<div className="wp-block-navigation-placeholder__controls">
+			<Placeholder className="wp-block-navigation-placeholder">
+				<div className="wp-block-navigation-placeholder__controls">
+					{ ( ! hasResolvedNavigationMenus || isStillLoading ) && (
+						<div className="wp-block-navigation-placeholder__actions is-loading">
+							<div className="wp-block-navigation-placeholder__actions__indicator">
+								<Icon icon={ navigation } />{ ' ' }
+								{ __( 'Navigation' ) }
+							</div>
+						</div>
+					) }
+					{ hasResolvedNavigationMenus && ! isStillLoading && (
 						<div className="wp-block-navigation-placeholder__actions">
 							<div className="wp-block-navigation-placeholder__actions__indicator">
 								<Icon icon={ navigation } />{ ' ' }
@@ -245,9 +248,9 @@ export default function NavigationPlaceholder( {
 								{ __( 'Start empty' ) }
 							</Button>
 						</div>
-					</div>
-				</Placeholder>
-			) }
+					) }
+				</div>
+			</Placeholder>
 			{ isNewMenuModalVisible && (
 				<NavigationMenuNameModal
 					title={ __( 'Create your new navigation menu' ) }
